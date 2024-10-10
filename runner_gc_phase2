@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+
+import sys
+sys.path.insert(0, '../secure-edit-distance')
+from math import ceil, log2
+
+from Compiler.library import print_ln
+from Compiler.GC.types import sbitint
+
+from load_sequences import *
+from preprocess import equality_gc
+from ukkonen_gc import *
+
+program.use_edabit(True)
+
+# m, n = int(sys.argv[-2]), int(sys.argv[-1])
+m, n = 2041, 2041
+
+bitlen = ceil(log2(max(m, n)))
+program.set_bit_length(bitlen)
+
+cc0, cc1, cc2 = 0, 0, 0
+minct0, minct1 = 0, 0
+gc_i = sbitint.get_type(bitlen)
+res = gc_i(0)
+
+a, b = load_sequences_gc(m, n, 1)
+m, n = len(a), len(b)
+print("MN", m, n)
+
+tt = 103 # Loose upper threshold
+E, cc0 = equality_gc(a, b, tt)
+
+modval = 48 # Segment length
+t = 61 # Found with t optimization (phase 1)
+print("T", t)
+
+# Ukkonen (gc):
+# res, cc2, minct1 = ukkonenRegular_gc_compiled(E, t, m, n, tt, [bitlen+1])
+res, cc2, minct1 = ukkonenDiagonal_gc(E, t, m, n, tt, [bitlen+1])
+# res, cc2, minct1 = ukkonenDiagonal_gc_with_ab(a, b, t, m, n, [bitlen+1])
+
+print("Comparisions:",  cc0+cc1+cc2)
+print("Minimums:", minct0+minct1)
+print_ln('RES: %s', res.reveal())

@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+
+import sys
+sys.path.insert(0, '../secure-edit-distance')
+from math import ceil, log2
+
+from Compiler.library import print_ln
+
+from load_sequences import *
+from preprocess import bitEquality
+from ukkonen import *
+from ukkonen_fill import *
+from ukkonen_fill_codedpaths import *
+from t_optimize import *
+
+program.use_edabit(True)
+program.use_split(2) # Comment this line for malicious
+
+# m, n = int(sys.argv[-3]), int(sys.argv[-2])
+# tau = int(sys.argv[-1])
+m, n = 2041, 2041
+tau = 3
+
+bitlen = ceil(log2(max(m, n)))
+program.set_bit_length(bitlen)
+
+cc0, cc1, cc2 = 0, 0, 0
+minct0, minct1 = 0, 0
+res = sint(0)
+
+a, b = load_sequences_bits(m, n, tau)
+m, n = len(a), len(b)
+print("MN", m, n)
+
+# Naive approach for phase 1
+# t = ceil(max(m, n)/10) // 2 * 2 + 1
+
+# New approach for phase 1
+tt = 103 # Loose upper threshold
+E, cc1 = bitEquality(a, b, tt)
+
+modval = 48 # Segment length
+res_approx, cc0, minct0, mvees = find_opt_diag(E, tt, modval)
+print_ln('Approx RES: %s', res_approx.reveal())
+t = 61
+print("TT, T", tt, t)
+
+# Ukkonen:
+# res, cc2, minct1 = ukkonenRegular(E, t, m, n, tt)
+# res, cc2, minct1 = ukkonenDiagonal(E, t, m, n, tt)
+
+# Ukkonen with tau+1 boxes: 
+# Performs compiletime optimizations; Lower tau would perform better-
+# res, minct1 = ukkonenFill(E, t, tau, m, n, tt)
+# res = ukkonenFillDiagonal(E, t, tau, m, n, tt)
+
+# Hardcoded paths:
+
+# Avoids compiletime optimization; Greater tau would perform better-
+# res = ukkonenFill1Tau(E, t, m, n, tt) # Akin to ukkonenRegular
+res = ukkonenFill3Tau(E, t, m, n, tt)
+# res = ukkonenFill4Tau(E, t, m, n, tt)
+
+# Performs compiletime optimizations; Lower tau would perform better-
+# res = ukkonenFill1Tau_opt_version(E, t, m, n, tt)
+# res = ukkonenFill3Tau_opt_version(E, t, m, n, tt)
+# res = ukkonenFill4Tau_opt_version(E, t, m, n, tt)
+
+print("Comparisions:",  cc0+cc1+cc2)
+print("Minimums:", minct0+minct1)
+print_ln('RES: %s', res.reveal())
+
+
+'''
+Shape optimization approach: Did work for some cases but usually did not have many benefits.
+Works well for aligned data but if the data is aligned we might as well just use only the leading diagonal
+'''
+
+# ttau = 1
+# leaks_leading = cumulated_leaks_leading(a, b, ttau, m, n)
+# print_ln('LEAKING.. %s', leaks_leading.reveal())
+# leaks_leading = [] # Set to the leaked array
+# mx_leading = 21 # Set to the last element in leaks_leading
+# t = (mx_leading * ttau) // 2 * 2 + 1
+
+# res, cc2, minct1 = ukkonenDiagonalShape(E, t, m, n, tt)
+# res, cc2, minct1 = ukkonenFillDiagonalShape_opt(E, t, tau, m, n, tt, modval)

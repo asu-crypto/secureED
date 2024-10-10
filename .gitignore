@@ -1,0 +1,15 @@
+logs/*
+*__pycache__/*
+*/__pycache__/*
+*.ipynb_checkpoints/*
+*/.ipynb_checkpoints/*
+*.ipynb
+
+Player-Data/*
+iDASH-Data/*
+PGP-Data/*
+Common-Data/*
+
+*.bc
+*.sch
+.DS_Store
